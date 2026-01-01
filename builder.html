@@ -72,9 +72,7 @@
       box-sizing: border-box;
     }
 
-    input[type="range"] {
-      width: 100%;
-    }
+    input[type="range"] { width: 100%; }
 
     button {
       width: 100%;
@@ -92,10 +90,10 @@
       margin-top: 8px;
     }
 
-    /* CRITICAL: ensure preview area always has height */
+    /* Critical: ensure preview area always has height */
     #view {
       height: 100%;
-      min-height: 520px;   /* iPad/Safari-safe fallback */
+      min-height: 520px; /* iPad/Safari-safe fallback */
       position: relative;
       background: #0b1220;
     }
@@ -182,8 +180,7 @@
       <button class="secondary" id="exportWheels">Export Wheels STL (4 files)</button>
 
       <div class="hint">
-        If you don’t see 3D: refresh once, then try opening builder.html directly.
-        (This version forces a non-zero canvas height on iPad.)
+        If 3D is blank, this version will show an on-screen error message (bottom-left).
       </div>
     </div>
 
@@ -191,6 +188,6 @@
   </div>
 
   <!-- Cache-bust to avoid iPad Safari serving old JS -->
-  <script type="module" src="builder.js?v=3"></script>
+  <script type="module" src="builder.js?v=6"></script>
 </body>
 </html>

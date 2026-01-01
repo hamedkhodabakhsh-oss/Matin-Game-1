@@ -1,6 +1,28 @@
-import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";
-import { OrbitControls } from "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js";
-import { STLExporter } from "https://unpkg.com/three@0.160.0/examples/jsm/exporters/STLExporter.js";
+// On-screen error reporting (so you can debug on iPad without a console)
+function showErrorBox(msg, color = "#ef4444") {
+  const box = document.createElement("div");
+  box.style.cssText =
+    `position:fixed;left:10px;bottom:10px;right:10px;` +
+    `padding:10px 12px;border-radius:12px;` +
+    `background:${color};color:#0b1220;font-weight:900;z-index:99999;` +
+    `box-shadow:0 8px 20px rgba(0,0,0,.35);`;
+  box.textContent = msg;
+  document.body.appendChild(box);
+}
+
+window.addEventListener("error", (e) => {
+  showErrorBox("JS ERROR: " + (e.message || "unknown"));
+});
+
+window.addEventListener("unhandledrejection", (e) => {
+  const m = e.reason?.message || String(e.reason);
+  showErrorBox("PROMISE ERROR: " + m, "#f59e0b");
+});
+
+// Three.js imports (loaded from the internet via CDN)
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+import { STLExporter } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/exporters/STLExporter.js";
 
 const ui = (id) => document.getElementById(id);
 const els = {
@@ -45,24 +67,27 @@ if (incoming) {
   if (incoming.wheelW)  els.ww.value  = String(incoming.wheelW);
   if (incoming.rideH)   els.rh.value  = String(incoming.rideH);
 } else {
-  // sensible defaults if nothing loaded
   if (!els.brand.value) els.brand.value = "Custom";
   if (!els.model.value) els.model.value = "One-off";
 }
 
-// ----- Three.js setup -----
 const mount = document.getElementById("view");
+if (!mount) showErrorBox("Could not find #view element (builder.html issue).");
 
+// Scene
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b1220);
 
+// Camera
 const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 5000);
 camera.position.set(260, 160, 260);
 
+// Renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 mount.appendChild(renderer.domElement);
 
+// Controls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
@@ -72,7 +97,7 @@ const dir = new THREE.DirectionalLight(0xffffff, 0.9);
 dir.position.set(300, 400, 200);
 scene.add(dir);
 
-// Ground grid
+// Grid
 scene.add(new THREE.GridHelper(800, 40, 0x334155, 0x1f2937));
 
 // Materials
@@ -87,20 +112,17 @@ const wheelMat = new THREE.MeshStandardMaterial({
   metalness: 0.05
 });
 
-// Mesh references
+// Mesh refs
 let bodyMesh = null;
 let wheelMeshes = [];
 
-// Helpers
 function safeName() {
   const b = (els.brand.value || "Custom").trim();
   const m = (els.model.value || "One-off").trim();
   return `${b}-${m}`.replace(/[^a-z0-9-_]+/gi, "_");
 }
 
-// Build/update car
-function buildCar() {
-  // Remove old meshes
+function clearMeshes() {
   if (bodyMesh) {
     bodyMesh.geometry.dispose();
     scene.remove(bodyMesh);
@@ -111,6 +133,10 @@ function buildCar() {
     scene.remove(w);
   }
   wheelMeshes = [];
+}
+
+function buildCar() {
+  clearMeshes();
 
   const length = clampNum(els.len.value, 120, 240);
   const width  = clampNum(els.wid.value, 55, 100);
@@ -136,7 +162,7 @@ function buildCar() {
   const bodyH = height * bodyFactor;
   const bodyY = wheelR + rideH + bodyH / 2;
 
-  // Body
+  // Body mesh
   const bodyGeo = new THREE.BoxGeometry(length, bodyH, width);
   bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
   bodyMesh.position.set(0, bodyY, 0);
@@ -167,7 +193,7 @@ function buildCar() {
   controls.target.set(0, bodyY, 0);
 }
 
-// Resize (iPad-safe)
+// iPad-safe resize
 function resize() {
   const w = mount.clientWidth || window.innerWidth;
   const h = mount.clientHeight || 520; // critical fallback
@@ -179,11 +205,10 @@ function resize() {
 window.addEventListener("resize", resize);
 window.addEventListener("orientationchange", () => setTimeout(resize, 200));
 
-// iPad Safari sometimes lays out late: observe mount resizing
 const ro = new ResizeObserver(() => resize());
 ro.observe(mount);
 
-// Export STL helpers
+// STL export
 function exportMeshSTL(mesh, filename) {
   const exporter = new STLExporter();
   const stl = exporter.parse(mesh, { binary: false });
@@ -200,7 +225,6 @@ function exportMeshSTL(mesh, filename) {
   URL.revokeObjectURL(url);
 }
 
-// Button hooks
 els.exportBody.addEventListener("click", () => {
   if (!bodyMesh) return;
   exportMeshSTL(bodyMesh, `${safeName()}_body.stl`);
@@ -211,7 +235,7 @@ els.exportWheels.addEventListener("click", () => {
   wheelMeshes.forEach((m, i) => exportMeshSTL(m, `${safeName()}_wheel_${names[i]}.stl`));
 });
 
-// UI change hooks
+// Rebuild on changes
 [
   els.paint, els.bodyType,
   els.len, els.wid, els.hei,
@@ -221,13 +245,13 @@ els.exportWheels.addEventListener("click", () => {
   el.addEventListener("change", buildCar);
 });
 
-// Initial run: resize first, then build, then resize again (helps iOS)
+// Initial
 resize();
 buildCar();
 setTimeout(resize, 0);
 setTimeout(resize, 250);
 
-// Render loop
+// Animation loop
 function tick() {
   controls.update();
   renderer.render(scene, camera);
