@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Builder</title>
+  <style>
+    html, body { margin:0; height:100%; background:#0b1220; color:white; font-family:-apple-system, system-ui; }
+    header { padding:12px; background:#111827; display:flex; justify-content:space-between; }
+    #view { height: 70vh; }
+    main { padding:12px; display:grid; gap:10px; }
+    input, select, button {
+      padding:10px;
+      border-radius:12px;
+      border:0;
+    }
+    button { background:#2563eb; color:white; font-weight:900; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <a href="garage.html" style="color:#c7d2fe;">← Garage</a>
+    <div>3D Builder</div>
+  </header>
+
+  <div id="view"></div>
+
+  <main>
+    <input id="brand" placeholder="Brand">
+    <input id="model" placeholder="Model">
+    <input id="paint" type="color" value="#2563eb">
+    <button id="export">Export STL</button>
+  </main>
+
+  <script type="module" src="builder.js"></script>
+</body>
+</html>

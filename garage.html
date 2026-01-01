@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Garage</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: -apple-system, system-ui;
+      background: #0b1220;
+      color: white;
+    }
+    header {
+      background: #111827;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header a {
+      color: #c7d2fe;
+      text-decoration: none;
+      font-weight: 900;
+    }
+    main {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+    .card {
+      background: #0f172a;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 14px;
+      border: 0;
+      background: #2563eb;
+      color: white;
+      font-weight: 900;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <a href="index.html">← Home</a>
+    <div style="font-weight:900;">Garage</div>
+  </header>
+
+  <main id="garage"></main>
+
+  <script type="module" src="garage.js"></script>
+</body>
+</html>

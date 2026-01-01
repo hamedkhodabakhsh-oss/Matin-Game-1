@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Car Garage</title>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.png" />
+
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial;
+      background: #0b1220;
+      color: white;
+    }
+    header {
+      padding: 14px 18px;
+      background: #111827;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 900;
+    }
+    main {
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+    }
+    .card {
+      background: #0f172a;
+      border-radius: 18px;
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    a.button {
+      display: block;
+      text-decoration: none;
+      color: white;
+      background: #2563eb;
+      padding: 16px;
+      border-radius: 14px;
+      text-align: center;
+      font-weight: 900;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div>Car Garage</div>
+    <div style="opacity:.7;font-size:12px;">3D Builder</div>
+  </header>
+
+  <main>
+    <div class="card">
+      Design and build custom cars, preview them in 3D, and export STL files for resin printing.
+      <a class="button" href="garage.html">Open Garage</a>
+    </div>
+  </main>
+</body>
+</html>
