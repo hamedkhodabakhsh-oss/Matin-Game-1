@@ -3,24 +3,115 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
   <title>Car Builder</title>
+
   <style>
-    html, body { margin:0; height:100%; background:#0b1220; color:#fff; font-family:-apple-system, system-ui; }
-    header { padding:12px 14px; background:#111827; display:flex; justify-content:space-between; align-items:center; }
-    header a { color:#c7d2fe; text-decoration:none; font-weight:900; }
-    .wrap { height: calc(100% - 52px); display:grid; grid-template-columns: 360px 1fr; }
-    @media (max-width: 900px){ .wrap { grid-template-columns: 1fr; grid-template-rows: 380px 1fr; } }
-    .panel { padding:12px; border-right:1px solid rgba(255,255,255,.12); background:#0f172a; overflow:auto; }
-    .row { margin-bottom: 12px; }
-    label { display:flex; justify-content:space-between; font-size:12px; opacity:.85; margin-bottom:6px; }
-    input[type="range"], select, input[type="text"], input[type="color"] {
-      width:100%; padding:10px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:#0b1220; color:#fff;
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #0b1220;
+      color: #fff;
+      font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial;
     }
-    input[type="range"] { padding:0; border:0; background:transparent; }
-    button { width:100%; padding:12px; border-radius:12px; border:0; background:#2563eb; color:#fff; font-weight:900; cursor:pointer; }
-    button.secondary { background: rgba(255,255,255,.10); margin-top:8px; }
-    #view { position:relative; }
-    canvas { display:block; width:100%; height:100%; }
+
+    header {
+      height: 52px;
+      padding: 0 14px;
+      background: #111827;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-sizing: border-box;
+    }
+
+    header a {
+      color: #c7d2fe;
+      text-decoration: none;
+      font-weight: 900;
+    }
+
+    .wrap {
+      height: calc(100vh - 52px);
+      display: grid;
+      grid-template-columns: 360px 1fr;
+    }
+
+    @media (max-width: 900px) {
+      .wrap {
+        grid-template-columns: 1fr;
+        grid-template-rows: 420px 1fr;
+      }
+    }
+
+    .panel {
+      padding: 12px;
+      border-right: 1px solid rgba(255,255,255,.12);
+      background: #0f172a;
+      overflow: auto;
+      box-sizing: border-box;
+    }
+
+    .row { margin-bottom: 12px; }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      opacity: .85;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], select, input[type="color"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: #0b1220;
+      color: #fff;
+      box-sizing: border-box;
+    }
+
+    input[type="range"] {
+      width: 100%;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 0;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: rgba(255,255,255,.10);
+      margin-top: 8px;
+    }
+
+    /* CRITICAL: ensure preview area always has height */
+    #view {
+      height: 100%;
+      min-height: 520px;   /* iPad/Safari-safe fallback */
+      position: relative;
+      background: #0b1220;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hint {
+      font-size: 12px;
+      opacity: .75;
+      line-height: 1.35;
+      margin-top: 10px;
+    }
   </style>
 </head>
 
@@ -28,7 +119,7 @@
   <header>
     <a href="garage.html">← Garage</a>
     <div style="font-weight:900;">Car Builder</div>
-    <div style="opacity:.7;font-size:12px;">3D Preview</div>
+    <div style="opacity:.7;font-size:12px;">Live 3D Preview</div>
   </header>
 
   <div class="wrap">
@@ -89,11 +180,17 @@
 
       <button id="exportBody">Export Body STL</button>
       <button class="secondary" id="exportWheels">Export Wheels STL (4 files)</button>
+
+      <div class="hint">
+        If you don’t see 3D: refresh once, then try opening builder.html directly.
+        (This version forces a non-zero canvas height on iPad.)
+      </div>
     </div>
 
     <div id="view"></div>
   </div>
 
-  <script type="module" src="builder.js"></script>
+  <!-- Cache-bust to avoid iPad Safari serving old JS -->
+  <script type="module" src="builder.js?v=3"></script>
 </body>
 </html>

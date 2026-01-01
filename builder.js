@@ -25,63 +25,91 @@ function clampNum(v, min, max) {
 function loadIncomingCar() {
   try {
     const raw = sessionStorage.getItem("builder_load");
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch { return null; }
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }
 
+// Apply incoming preset/car if present
 const incoming = loadIncomingCar();
 if (incoming) {
   els.brand.value = incoming.brand ?? "";
   els.model.value = incoming.model ?? "";
   els.bodyType.value = incoming.bodyType ?? "coupe";
   els.paint.value = incoming.paint ?? "#2563eb";
-  if (incoming.length) els.len.value = String(incoming.length);
-  if (incoming.width) els.wid.value = String(incoming.width);
-  if (incoming.height) els.hei.value = String(incoming.height);
-  if (incoming.wheelR) els.wr.value = String(incoming.wheelR);
-  if (incoming.wheelW) els.ww.value = String(incoming.wheelW);
-  if (incoming.rideH) els.rh.value = String(incoming.rideH);
+  if (incoming.length)  els.len.value = String(incoming.length);
+  if (incoming.width)   els.wid.value = String(incoming.width);
+  if (incoming.height)  els.hei.value = String(incoming.height);
+  if (incoming.wheelR)  els.wr.value  = String(incoming.wheelR);
+  if (incoming.wheelW)  els.ww.value  = String(incoming.wheelW);
+  if (incoming.rideH)   els.rh.value  = String(incoming.rideH);
+} else {
+  // sensible defaults if nothing loaded
+  if (!els.brand.value) els.brand.value = "Custom";
+  if (!els.model.value) els.model.value = "One-off";
 }
 
-// ----- Three.js scene -----
+// ----- Three.js setup -----
 const mount = document.getElementById("view");
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b1220);
 
 const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 5000);
 camera.position.set(260, 160, 260);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 mount.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
+// Lights
 scene.add(new THREE.HemisphereLight(0xffffff, 0x223344, 1.15));
 const dir = new THREE.DirectionalLight(0xffffff, 0.9);
 dir.position.set(300, 400, 200);
 scene.add(dir);
 
+// Ground grid
 scene.add(new THREE.GridHelper(800, 40, 0x334155, 0x1f2937));
 
-const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2563eb, roughness: 0.35, metalness: 0.2 });
-const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.85, metalness: 0.05 });
+// Materials
+const bodyMat = new THREE.MeshStandardMaterial({
+  color: new THREE.Color(els.paint.value),
+  roughness: 0.35,
+  metalness: 0.2
+});
+const wheelMat = new THREE.MeshStandardMaterial({
+  color: 0x111827,
+  roughness: 0.85,
+  metalness: 0.05
+});
 
+// Mesh references
 let bodyMesh = null;
 let wheelMeshes = [];
 
+// Helpers
 function safeName() {
   const b = (els.brand.value || "Custom").trim();
   const m = (els.model.value || "One-off").trim();
   return `${b}-${m}`.replace(/[^a-z0-9-_]+/gi, "_");
 }
 
+// Build/update car
 function buildCar() {
-  // remove old
-  if (bodyMesh) { bodyMesh.geometry.dispose(); scene.remove(bodyMesh); }
-  for (const w of wheelMeshes) { w.geometry.dispose(); scene.remove(w); }
+  // Remove old meshes
+  if (bodyMesh) {
+    bodyMesh.geometry.dispose();
+    scene.remove(bodyMesh);
+    bodyMesh = null;
+  }
+  for (const w of wheelMeshes) {
+    w.geometry.dispose();
+    scene.remove(w);
+  }
   wheelMeshes = [];
 
   const length = clampNum(els.len.value, 120, 240);
@@ -100,30 +128,35 @@ function buildCar() {
 
   bodyMat.color = new THREE.Color(els.paint.value);
 
-  // body sits above wheels
-  const bodyH = height * 0.55;
+  // Body height based on type
+  let bodyFactor = 0.55;
+  if (els.bodyType.value === "suv") bodyFactor = 0.70;
+  if (els.bodyType.value === "saloon") bodyFactor = 0.58;
+
+  const bodyH = height * bodyFactor;
   const bodyY = wheelR + rideH + bodyH / 2;
 
+  // Body
   const bodyGeo = new THREE.BoxGeometry(length, bodyH, width);
   bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
   bodyMesh.position.set(0, bodyY, 0);
   scene.add(bodyMesh);
 
-  // wheels
+  // Wheels
   const wheelGeo = new THREE.CylinderGeometry(wheelR, wheelR, wheelW, 36, 1);
   wheelGeo.rotateZ(Math.PI / 2);
 
   const axleX = length * 0.33;
   const axleZ = width * 0.50;
 
-  const pos = [
+  const positions = [
     ["FL",  axleX, wheelR,  axleZ],
     ["FR",  axleX, wheelR, -axleZ],
     ["RL", -axleX, wheelR,  axleZ],
     ["RR", -axleX, wheelR, -axleZ],
   ];
 
-  for (const [name, x, y, z] of pos) {
+  for (const [name, x, y, z] of positions) {
     const w = new THREE.Mesh(wheelGeo, wheelMat);
     w.position.set(x, y, z);
     w.userData.partName = `wheel_${name}`;
@@ -134,30 +167,40 @@ function buildCar() {
   controls.target.set(0, bodyY, 0);
 }
 
+// Resize (iPad-safe)
 function resize() {
-  const w = mount.clientWidth;
-  const h = mount.clientHeight;
+  const w = mount.clientWidth || window.innerWidth;
+  const h = mount.clientHeight || 520; // critical fallback
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   renderer.setSize(w, h, false);
 }
-window.addEventListener("resize", resize);
 
-// Export
+window.addEventListener("resize", resize);
+window.addEventListener("orientationchange", () => setTimeout(resize, 200));
+
+// iPad Safari sometimes lays out late: observe mount resizing
+const ro = new ResizeObserver(() => resize());
+ro.observe(mount);
+
+// Export STL helpers
 function exportMeshSTL(mesh, filename) {
   const exporter = new STLExporter();
   const stl = exporter.parse(mesh, { binary: false });
   const blob = new Blob([stl], { type: "model/stl" });
   const url = URL.createObjectURL(blob);
+
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
+
   URL.revokeObjectURL(url);
 }
 
+// Button hooks
 els.exportBody.addEventListener("click", () => {
   if (!bodyMesh) return;
   exportMeshSTL(bodyMesh, `${safeName()}_body.stl`);
@@ -168,7 +211,7 @@ els.exportWheels.addEventListener("click", () => {
   wheelMeshes.forEach((m, i) => exportMeshSTL(m, `${safeName()}_wheel_${names[i]}.stl`));
 });
 
-// Wire changes
+// UI change hooks
 [
   els.paint, els.bodyType,
   els.len, els.wid, els.hei,
@@ -178,9 +221,13 @@ els.exportWheels.addEventListener("click", () => {
   el.addEventListener("change", buildCar);
 });
 
-buildCar();
+// Initial run: resize first, then build, then resize again (helps iOS)
 resize();
+buildCar();
+setTimeout(resize, 0);
+setTimeout(resize, 250);
 
+// Render loop
 function tick() {
   controls.update();
   renderer.render(scene, camera);
